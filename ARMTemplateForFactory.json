@@ -1,0 +1,675 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-f1-data-project"
+        },
+        "LS_ADLS_F1_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'LS_ADLS_F1'"
+        },
+        "LS_ADLS_F1_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://f1datalake001.dfs.core.windows.net/"
+        },
+        "LS_REST_Jolpica_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api.jolpi.ca"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_F1_Races_Raw')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Copy data1",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "RestSource",
+                                "httpRequestTimeout": "00:01:40",
+                                "requestInterval": "00.00:00:00.010",
+                                "requestMethod": "GET",
+                                "paginationRules": {
+                                    "supportRFC5988": "true"
+                                }
+                            },
+                            "sink": {
+                                "type": "JsonSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_REST_Jolpica_Races",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "DS_ADLS_F1_Raw_JSON",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-03T09:19:19Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/DS_REST_Jolpica_Races')]",
+                "[concat(variables('factoryId'), '/datasets/DS_ADLS_F1_Raw_JSON')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_F1_Raw_To_Ingested')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Copy data1",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "JsonSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_ADLS_F1_Raw_Source",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "DS_ADLS_F1_Ingested",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-03T09:34:14Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/DS_ADLS_F1_Raw_Source')]",
+                "[concat(variables('factoryId'), '/datasets/DS_ADLS_F1_Ingested')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_F1_Ingested_To_Presentation')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Copy data1",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "JsonSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_ADLS_F1_Ingested_Source",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "DS_ADLS_F1_Presentation",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Data flow1",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [
+                            {
+                                "activity": "Copy data1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "dataflow1",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "source1": {},
+                                    "sink1": {}
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-08T17:32:44Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/DS_ADLS_F1_Ingested_Source')]",
+                "[concat(variables('factoryId'), '/datasets/DS_ADLS_F1_Presentation')]",
+                "[concat(variables('factoryId'), '/dataflows/dataflow1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/LS_ADLS_F1')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('LS_ADLS_F1_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('LS_ADLS_F1_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/LS_REST_Jolpica')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "RestService",
+                "typeProperties": {
+                    "url": "[parameters('LS_REST_Jolpica_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/dataflow1')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "DS_ADLS_F1_Ingested_Source",
+                                "type": "DatasetReference"
+                            },
+                            "name": "source1"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "DS_ADLS_F1_Presentation",
+                                "type": "DatasetReference"
+                            },
+                            "name": "sink1"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "flatten1"
+                        }
+                    ],
+                    "scriptLines": [
+                        "source(output(",
+                        "          MRData as (RaceTable as (Races as (Circuit as (Location as (country as string, lat as double, locality as string, long as double), circuitId as string, circuitName as string, url as string), FirstPractice as (date as date, time as string), Qualifying as (date as date, time as string), SecondPractice as (date as date, time as string), Sprint as (date as date, time as string), SprintQualifying as (date as date, time as string), ThirdPractice as (date as date, time as string), date as date, raceName as string, round as short, season as short, time as string, url as string)[], season as short), limit as short, offset as boolean, series as string, total as short, url as string, xmlns as string)",
+                        "     ),",
+                        "     allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     inferDriftedColumnTypes: true,",
+                        "     ignoreNoFilesFound: false,",
+                        "     documentForm: 'documentPerLine') ~> source1",
+                        "source1 foldDown(unroll(MRData.RaceTable.Races),",
+                        "     mapColumn(",
+                        "          Season = MRData.RaceTable.season,",
+                        "          Round = MRData.RaceTable.Races.round,",
+                        "          {Race Name} = MRData.RaceTable.Races.raceName,",
+                        "          {Circuit ID} = MRData.RaceTable.Races.Circuit.circuitId,",
+                        "          {Circuit Name} = MRData.RaceTable.Races.Circuit.circuitName,",
+                        "          Latitude = MRData.RaceTable.Races.Circuit.Location.lat,",
+                        "          Longitude = MRData.RaceTable.Races.Circuit.Location.long,",
+                        "          City = MRData.RaceTable.Races.Circuit.Location.locality,",
+                        "          Country = MRData.RaceTable.Races.Circuit.Location.country,",
+                        "          {Race Date} = MRData.RaceTable.Races.date,",
+                        "          {Race Time} = MRData.RaceTable.Races.time",
+                        "     ),",
+                        "     skipDuplicateMapInputs: false,",
+                        "     skipDuplicateMapOutputs: false) ~> flatten1",
+                        "flatten1 sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     umask: 0022,",
+                        "     preCommands: [],",
+                        "     postCommands: [],",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true) ~> sink1"
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/DS_ADLS_F1_Ingested_Source')]",
+                "[concat(variables('factoryId'), '/datasets/DS_ADLS_F1_Presentation')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADLS_F1_Raw_JSON')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADLS_F1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "f1_races_2024.json",
+                        "folderPath": "raw",
+                        "fileSystem": "f1-data"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/LS_ADLS_F1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADLS_F1_Raw')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADLS_F1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "f1_races_2024.json",
+                        "folderPath": "raw",
+                        "fileSystem": "f1-data"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/LS_ADLS_F1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_REST_Jolpica_Races')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_REST_Jolpica",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "RestResource",
+                "typeProperties": {
+                    "relativeUrl": "/ergast/f1/2024/races/"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/LS_REST_Jolpica')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADLS_F1_Ingested')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADLS_F1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "f1_races_2024.json",
+                        "folderPath": "ingested",
+                        "fileSystem": "f1-data"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/LS_ADLS_F1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADLS_F1_Raw_Source')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADLS_F1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "f1_races_2024.json",
+                        "folderPath": "raw",
+                        "fileSystem": "f1-data"
+                    }
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "MRData": {
+                            "type": "object",
+                            "properties": {
+                                "xmlns": {
+                                    "type": "string"
+                                },
+                                "series": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                },
+                                "limit": {
+                                    "type": "string"
+                                },
+                                "offset": {
+                                    "type": "string"
+                                },
+                                "total": {
+                                    "type": "string"
+                                },
+                                "RaceTable": {
+                                    "type": "object",
+                                    "properties": {
+                                        "season": {
+                                            "type": "string"
+                                        },
+                                        "Races": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "season": {
+                                                        "type": "string"
+                                                    },
+                                                    "round": {
+                                                        "type": "string"
+                                                    },
+                                                    "url": {
+                                                        "type": "string"
+                                                    },
+                                                    "raceName": {
+                                                        "type": "string"
+                                                    },
+                                                    "Circuit": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "circuitId": {
+                                                                "type": "string"
+                                                            },
+                                                            "url": {
+                                                                "type": "string"
+                                                            },
+                                                            "circuitName": {
+                                                                "type": "string"
+                                                            },
+                                                            "Location": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "lat": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "long": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "locality": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "country": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "date": {
+                                                        "type": "string"
+                                                    },
+                                                    "time": {
+                                                        "type": "string"
+                                                    },
+                                                    "FirstPractice": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string"
+                                                            },
+                                                            "time": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "SecondPractice": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string"
+                                                            },
+                                                            "time": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "ThirdPractice": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string"
+                                                            },
+                                                            "time": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "Qualifying": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string"
+                                                            },
+                                                            "time": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/LS_ADLS_F1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADLS_F1_Ingested_Source')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADLS_F1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "f1_races_2024.json",
+                        "folderPath": "ingested",
+                        "fileSystem": "f1-data"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/LS_ADLS_F1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADLS_F1_Presentation')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADLS_F1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "f1_races_2024.json",
+                        "folderPath": "presentation",
+                        "fileSystem": "f1-data"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/LS_ADLS_F1')]"
+            ]
+        }
+    ]
+}
