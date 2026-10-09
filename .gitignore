@@ -1,0 +1,27 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+local.settings.json
+
+# Azure local files
+.azure/
+.azuredevops/
+
+# Power BI temporary and backup files
+*.pbit
+~$*.pbix
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary and log files
+*.log
+*.tmp
+*.bak
