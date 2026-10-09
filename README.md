@@ -59,3 +59,23 @@ Jolpica F1 API: https://api.jolpi.ca/ergast/f1/2024/races/
 - Automate scheduled data ingestion.
 - Extend the pipeline to include drivers, constructors, qualifying, and race results.
 - Add more analytical measures and dashboard insights.
+
+## Project Screenshots
+
+### Power BI F1 Race Dashboard
+![F1 Race Dashboard](screenshots/f1-dashboard.png)
+
+### Azure Data Factory Pipelines
+
+**1. Extract F1 race data into the raw layer**
+![Raw Pipeline](screenshots/adf-pipeline-raw.png)
+
+**2. Copy data from raw to ingested**
+![Ingested Pipeline](screenshots/adf-pipeline-ingested.png)
+
+**3. Transform data into the presentation layer**
+![Presentation Pipeline](screenshots/adf-pipeline-presentation.png)
+
+## GitHub Repository
+
+[View the complete F1 Data Engineering Project](https://github.com/Nived-Shambhu/f1-data-engineering-azure)
